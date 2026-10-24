@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WORLD DOMINION</title>
+<style>
+:root{--bg:#09111f;--panel:#121f32;--line:#2a3d56;--text:#edf4ff;--muted:#9db0c9;--green:#55e0a2;--gold:#f5c96a;--red:#ff7777}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#182b43,#080d17 75%);color:var(--text);font:14px system-ui,Arial}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 20px;background:#0b1423;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.brand{font-size:22px;font-weight:900;letter-spacing:2px}.brand span{color:var(--green)}
+.sub,.muted{color:var(--muted)}.sub{font-size:10px;letter-spacing:2px}
+button,select,input{font:inherit;color:var(--text);background:#20334b;border:1px solid #38516e;border-radius:8px;padding:9px 11px}
+button{cursor:pointer}button:hover{border-color:var(--green);filter:brightness(1.1)}
+.primary{background:var(--green);color:#07150f;font-weight:800}
+.layout{display:grid;grid-template-columns:205px minmax(300px,1fr) 260px;gap:12px;padding:12px;max-width:1600px;margin:auto}
+.panel{background:linear-gradient(145deg,#142238,#0f1929);border:1px solid var(--line);border-radius:13px;overflow:hidden;min-width:0;margin-bottom:12px}
+.panel h2{font-size:12px;text-transform:uppercase;letter-spacing:1px;margin:0;padding:13px;border-bottom:1px solid var(--line);color:#c1d3eb}
+.pad{padding:13px}.nav button{display:block;width:100%;text-align:left;margin:5px 0;background:transparent;border-color:transparent;color:var(--muted)}
+.nav button.active{background:#20364d;color:white;border-color:#31506b}
+.statgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.stat{background:#122035;border:1px solid var(--line);border-radius:10px;padding:10px;min-width:0}
+.stat small{display:block;color:var(--muted);font-size:11px}.stat strong{font-size:18px;overflow-wrap:anywhere}
+.world{position:relative;min-height:340px;background:radial-gradient(ellipse at center,#102941,#070c14);display:flex;align-items:center;justify-content:center;overflow:hidden}
+#globe{width:min(95%,450px);height:auto;cursor:grab}.globe-label{position:absolute;left:13px;top:10px;color:var(--muted);font-size:11px}
+.world-foot{position:absolute;bottom:10px;left:13px;right:13px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.small{font-size:12px}.row{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.between{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.field{display:grid;gap:5px;margin:10px 0}.field label{color:var(--muted);font-size:12px}
+input,select{width:100%;background:#0d1828}
+.resource{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid #26364b;padding:8px 0}
+.section{display:none}.section.active{display:block}
+.event{border-left:3px solid var(--gold);padding:9px 10px;margin:8px 0;background:#18263a;border-radius:0 8px 8px 0;font-size:12px}
+.event.good{border-color:var(--green)}.event.bad{border-color:var(--red)}
+.log{max-height:340px;overflow:auto}
+.meter{height:7px;background:#26384d;border-radius:10px;overflow:hidden;margin-top:5px}
+.meter i{display:block;height:100%;background:var(--green);width:50%;transition:width .3s}
+.country-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font-size:11px;padding:6px 9px;border-radius:20px;background:#102039}
+.chip.selected{border-color:var(--green);color:var(--green)}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#e7fff4;color:#062218;padding:11px 18px;border-radius:10px;font-weight:bold;display:none;z-index:20}
+@media(max-width:1050px){.layout{grid-template-columns:180px minmax(0,1fr)}.rightcol{grid-column:1/-1}}
+@media(max-width:650px){header{align-items:flex-start;flex-direction:column}.layout{display:flex;flex-direction:column;padding:8px}.statgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.world{min-height:290px}}
+</style>
+</head>
+<body>
+
+<header>
+  <div><div class="brand">WORLD <span>DOMINION</span></div><div class="sub">GLOBAL STRATEGY SIMULATOR</div></div>
+  <div class="row"><span id="dateLabel" class="muted">Ocak 2026</span><button id="saveBtn">Kaydet</button><button class="primary" id="turnBtn">Sonraki Ay ↗</button></div>
+</header>
+
+<div class="layout">
+<aside class="panel">
+  <h2>Devlet yönetimi</h2>
+  <div class="pad">
+    <div class="between"><div><div class="muted small">YÖNETİLEN ÜLKE</div><strong id="countryName">Türkiye</strong></div><span id="flag">🇹🇷</span></div>
+    <div class="field"><label>Ülke seç</label><select id="countrySelect"></select></div>
+    <div class="nav" id="nav">
+      <button class="active" data-tab="overview">◈ Genel bakış</button>
+      <button data-tab="economy">▤ Ekonomi</button>
+      <button data-tab="government">⚖ Hükûmet</button>
+      <button data-tab="military">✦ Ordu</button>
+      <button data-tab="diplomacy">◎ Diplomasi</button>
+      <button data-tab="technology">⌘ Teknoloji</button>
+      <button data-tab="customize">✎ Ülkeyi düzenle</button>
+    </div>
+    <div class="event good"><b>Amaç</b><br>Ekonomini büyüt, ordunu geliştir, diplomatik ilişkiler kur ve dünyada güç kazan.</div>
+  </div>
+</aside>
+
+<main>
+  <div class="statgrid">
+    <div class="stat"><small>Hazine</small><strong id="treasury">$84B</strong><div class="muted small">Devlet bütçesi</div></div>
+    <div class="stat"><small>Ekonomi</small><strong id="gdp">$1.32T</strong><div class="muted small">GSYH</div></div>
+    <div class="stat"><small>Nüfus</small><strong id="population">85.3M</strong><div class="muted small">Kişi</div></div>
+    <div class="stat"><small>Halk desteği</small><strong id="approval">68%</strong><div class="meter"><i id="approvalMeter"></i></div></div>
+  </div>
+
+  <section class="panel">
+    <div class="between pad"><div><h2>Dünya görünümü</h2><span class="muted small">Dönen dünya küresi</span></div><button id="rotateBtn">Döndür: Açık</button></div>
+    <div class="world">
+      <div class="globe-label">🌐 DÜNYA SİMÜLASYONU</div>
+      <canvas id="globe" width="600" height="600"></canvas>
+      <div class="world-foot"><span id="worldStatus">Dünya dengesi: istikrarlı</span><span class="muted small">Küreyi sürükle</span></div>
+    </div>
+    <div class="pad"><strong>Ülkeler</strong><div id="countryChips" class="country-list"></div></div>
+  </section>
+
+  <section class="panel pad section active" id="tab-overview">
+    <h2>Devlet özeti</h2><p id="summary" class="muted">Ülkenin ekonomisini geliştir, halkın desteğini koru ve küresel nüfuzunu artır.</p>
+    <div class="statgrid">
+      <div class="stat"><small>Askerî güç</small><strong id="milPower">72</strong></div>
+      <div class="stat"><small>Teknoloji</small><strong id="techLevel">41</strong></div>
+      <div class="stat"><small>Diplomasi</small><strong id="diplomacyScore">55</strong></div>
+      <div class="stat"><small>Sanayi</small><strong id="industryScore">48</strong></div>
+    </div>
+  </section>
+
+  <section class="panel pad section" id="tab-economy">
+    <h2>Ekonomi yönetimi</h2>
+    <div class="resource"><span>Vergi oranı</span><strong id="taxValue">22%</strong></div>
+    <input type="range" min="5" max="50" value="22" id="taxRange">
+    <div class="resource"><span>Devlet harcaması</span><strong id="spendValue">$40B</strong></div>
+    <input type="range" min="10" max="100" value="40" id="spendRange">
+    <div class="resource"><span>Aylık gelir</span><strong id="income">$12B</strong></div>
+    <div class="resource"><span>Aylık gider</span><strong id="expenses">$10B</strong></div>
+    <div class="row" style="margin-top:12px"><button id="investIndustry">Sanayiye yatırım (-$5B)</button><button id="investInfra">Altyapıya yatırım (-$3B)</button></div>
+  </section>
+
+  <section class="panel pad section" id="tab-government">
+    <h2>Hükûmet ve halk</h2>
+    <div class="field"><label>Devlet başkanı</label><input id="leaderInput" value="Devlet Başkanı"></div>
+    <div class="field"><label>Yönetim politikası</label><select id="policySelect"><option value="balanced">Dengeli yönetim</option><option value="welfare">Sosyal refah</option><option value="industry">Sanayi ve büyüme</option><option value="security">Güvenlik önceliği</option></select></div>
+    <button class="primary" id="applyPolicy">Politikayı uygula</button>
+    <div class="resource"><span>Halk memnuniyeti</span><strong id="approval2">68%</strong></div><div class="meter"><i id="approvalMeter2"></i></div>
+  </section>
+
+  <section class="panel pad section" id="tab-military">
+    <h2>Silahlı kuvvetler</h2>
+    <div class="resource"><span>Kara kuvvetleri</span><strong id="army">42</strong></div><div class="meter"><i id="armyMeter"></i></div>
+    <div class="resource"><span>Hava kuvvetleri</span><strong id="air">18</strong></div><div class="meter"><i id="airMeter"></i></div>
+    <div class="resource"><span>Deniz kuvvetleri</span><strong id="navy">12</strong></div><div class="meter"><i id="navyMeter"></i></div>
+    <div class="row" style="margin-top:12px"><button id="trainArmy">Orduyu eğit (-$2B)</button><button id="defenseIndustry">Savunma yatırımı (-$4B)</button></div>
+  </section>
+
+  <section class="panel pad section" id="tab-diplomacy">
+    <h2>Diplomasi masası</h2>
+    <div class="field"><label>Diplomatik muhatap</label><select id="partnerSelect"></select></div>
+    <div class="row"><button id="tradeBtn">Ticaret anlaşması</button><button id="allianceBtn">İttifak kur</button><button id="warBtn">Savaş ilan et</button></div>
+    <div class="resource"><span>İlişki seviyesi</span><strong id="relationValue">55 / 100</strong></div><div class="meter"><i id="relationMeter"></i></div>
+    <div id="diplomacyLog" class="event">Diplomatik hamleler ilişkileri ve hazineyi etkiler.</div>
+  </section>
+
+  <section class="panel pad section" id="tab-technology">
+    <h2>Bilim ve teknoloji</h2>
+    <p class="muted">Araştırma yatırımları ülkenin gelişimini hızlandırır.</p>
+    <div class="resource"><span>Sanayi</span><strong id="techIndustry">48</strong></div><div class="meter"><i id="industryMeter"></i></div>
+    <div class="resource"><span>Sağlık</span><strong id="techHealth">45</strong></div><div class="meter"><i id="healthMeter"></i></div>
+    <div class="resource"><span>Enerji</span><strong id="techEnergy">39</strong></div><div class="meter"><i id="energyMeter"></i></div>
+    <div class="resource"><span>Uzay</span><strong id="techSpace">21</strong></div><div class="meter"><i id="spaceMeter"></i></div>
+    <button id="researchBtn" style="margin-top:12px">Araştırmaya yatırım (-$3B)</button>
+  </section>
+
+  <section class="panel pad section" id="tab-customize">
+    <h2>Ülkeni düzenle</h2>
+    <div class="field"><label>Ülke adı</label><input id="nameInput" value="Türkiye"></div>
+    <div class="field"><label>Bayrak emojisi</label><input id="flagInput" value="🇹🇷"></div>
+    <div class="field"><label>Başkent</label><input id="capitalInput" value="Ankara"></div>
+    <div class="field"><label>Resmî dil</label><input id="languageInput" value="Türkçe"></div>
+    <button class="primary" id="saveIdentity">Değişiklikleri uygula</button>
+  </section>
+</main>
+
+<aside class="rightcol">
+  <section class="panel"><h2>Olay akışı</h2><div class="pad log" id="eventLog"><div class="event good"><b>Yeni dönem</b><br>Simülasyon başladı.</div></div></section>
+  <section class="panel"><h2>Hızlı durum</h2><div class="pad">
+    <div class="resource"><span>Başkent</span><strong id="capitalDisplay">Ankara</strong></div>
+    <div class="resource"><span>Resmî dil</span><strong id="languageDisplay">Türkçe</strong></div>
+    <div class="resource"><span>Aktif ittifak</span><strong id="allianceCount">0</strong></div>
+    <div class="resource"><span>Savaş</span><strong id="warCount">Yok</strong></div>
+  </div></section>
+</aside>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+const initialCountries = [
+ {name:"Türkiye",flag:"🇹🇷",capital:"Ankara",language:"Türkçe",population:85.3,gdp:1320,treasury:84,approval:68,tax:22,spend:40,army:42,air:18,navy:12,tech:41,diplomacy:55,industry:48,health:45,energy:39,space:21},
+ {name:"ABD",flag:"🇺🇸",capital:"Washington",language:"İngilizce",population:334,gdp:27360,treasury:900,approval:62,tax:25,spend:65,army:90,air:95,navy:90,tech:95,diplomacy:80,industry:90,health:82,energy:88,space:95},
+ {name:"Çin",flag:"🇨🇳",capital:"Pekin",language:"Çince",population:1409,gdp:17700,treasury:750,approval:75,tax:24,spend:62,army:92,air:86,navy:85,tech:88,diplomacy:72,industry:96,health:78,energy:90,space:88},
+ {name:"Rusya",flag:"🇷🇺",capital:"Moskova",language:"Rusça",population:144,gdp:2020,treasury:180,approval:59,tax:20,spend:55,army:94,air:82,navy:72,tech:78,diplomacy:65,industry:70,health:65,energy:94,space:80},
+ {name:"Hindistan",flag:"🇮🇳",capital:"Yeni Delhi",language:"Hintçe",population:1428,gdp:3730,treasury:220,approval:66,tax:20,spend:42,army:80,air:72,navy:65,tech:72,diplomacy:70,industry:75,health:61,energy:72,space:76},
+ {name:"Birleşik Krallık",flag:"🇬🇧",capital:"Londra",language:"İngilizce",population:68,gdp:3340,treasury:170,approval:64,tax:23,spend:40,army:55,air:70,navy:75,tech:83,diplomacy:82,industry:65,health:80,energy:62,space:77},
+ {name:"Fransa",flag:"🇫🇷",capital:"Paris",language:"Fransızca",population:68,gdp:3050,treasury:150,approval:63,tax:26,spend:43,army:62,air:72,navy:69,tech:80,diplomacy:78,industry:68,health:84,energy:82,space:75},
+ {name:"Almanya",flag:"🇩🇪",capital:"Berlin",language:"Almanca",population:84,gdp:4450,treasury:230,approval:69,tax:27,spend:39,army:55,air:65,navy:45,tech:87,diplomacy:79,industry:93,health:86,energy:68,space:72},
+ {name:"Japonya",flag:"🇯🇵",capital:"Tokyo",language:"Japonca",population:124,gdp:4210,treasury:210,approval:67,tax:24,spend:37,army:48,air:72,navy:78,tech:94,diplomacy:76,industry:88,health:91,energy:65,space:86},
+ {name:"Brezilya",flag:"🇧🇷",capital:"Brasilya",language:"Portekizce",population:216,gdp:2170,treasury:100,approval:65,tax:19,spend:35,army:52,air:48,navy:43,tech:62,diplomacy:68,industry:64,health:66,energy:80,space:48},
+ {name:"Kanada",flag:"🇨🇦",capital:"Ottawa",language:"İngilizce/Fransızca",population:40,gdp:2140,treasury:130,approval:71,tax:22,spend:35,army:38,air:55,navy:45,tech:82,diplomacy:80,industry:69,health:89,energy:90,space:74},
+ {name:"İtalya",flag:"🇮🇹",capital:"Roma",language:"İtalyanca",population:59,gdp:2250,treasury:110,approval:60,tax:27,spend:38,army:48,air:61,navy:60,tech:75,diplomacy:74,industry:70,health:85,energy:61,space:64}
+];
+
+let countries = JSON.parse(JSON.stringify(initialCountries));
+let currentIndex = 0;
+let month = 1, year = 2026;
+let alliances = new Set();
+let wars = new Set();
+let relations = {};
+let rotation = 0, rotating = true, dragging = false, lastX = 0;
+let toastTimer;
+
+const $ = id => document.getElementById(id);
+const country = () => countries[currentIndex];
+const clamp = (v,min=0,max=100) => Math.max(min,Math.min(max,v));
+const fmtMoney = n => "$" + Number(n).toLocaleString("en-US",{maximumFractionDigits:1}) + "B";
+const fmtGDP = n => n >= 1000 ? "$"+(n/1000).toFixed(2)+"T" : "$"+n.toFixed(0)+"B";
+const months = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+
+function notify(message){
+ const t=$("toast"); t.textContent=message; t.style.display="block";
+ clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.style.display="none",2400);
+}
+function log(message,type=""){
+ const box=$("eventLog"), div=document.createElement("div");
+ div.className="event "+type;
+ const date=document.createElement("b"); date.textContent=months[month-1]+" "+year;
+ const body=document.createElement("div"); body.textContent=message;
+ div.append(date,body); box.prepend(div);
+ while(box.children.length>35) box.lastElementChild.remove();
+}
+function relationKey(a,b){return [a,b].sort().join("|")}
+function getRelation(a,b){
+ const k=relationKey(a,b);
+ if(relations[k]===undefined) relations[k]=55;
+ return relations[k];
+}
+function setRelation(a,b,value){relations[relationKey(a,b)]=clamp(value)}
+
+function populateCountries(){
+ $("countrySelect").innerHTML="";
+ $("partnerSelect").innerHTML="";
+ countries.forEach((c,i)=>{
+  const option=document.createElement("option");
+  option.value=i; option.textContent=c.flag+" "+c.name;
+  $("countrySelect").appendChild(option);
+ });
+ updatePartnerOptions();
+}
+function updatePartnerOptions(){
+ const old=Number($("partnerSelect").value);
+ $("partnerSelect").innerHTML="";
+ countries.forEach((c,i)=>{
+  if(i===currentIndex)return;
+  const o=document.createElement("option");o.value=i;o.textContent=c.flag+" "+c.name;
+  $("partnerSelect").appendChild(o);
+ });
+ if([...$("partnerSelect").options].some(o=>Number(o.value)===old)) $("partnerSelect").value=old;
+}
+function selectCountry(i){
+ currentIndex=Number(i);
+ $("countrySelect").value=currentIndex;
+ updatePartnerOptions();
+ updateUI();
+ renderChips();
+}
+function renderChips(){
+ const box=$("countryChips");box.innerHTML="";
+ countries.forEach((c,i)=>{
+  const b=document.createElement("button");
+  b.className="chip"+(i===currentIndex?" selected":"");
+  b.textContent=c.flag+" "+c.name;
+  b.onclick=()=>selectCountry(i);
+  box.appendChild(b);
+ });
+}
+function setMeter(id,value){
+ const el=$(id); if(el)el.style.width=clamp(value)+"%";
+}
+function updateUI(){
+ const c=country();
+ $("countryName").textContent=c.name;
+ $("flag").textContent=c.flag;
+ $("treasury").textContent=fmtMoney(c.treasury);
+ $("gdp").textContent=fmtGDP(c.gdp);
+ $("population").textContent=c.population.toLocaleString("tr-TR",{maximumFractionDigits:1})+"M";
+ $("approval").textContent=Math.round(c.approval)+"%";
+ $("approval2").textContent=Math.round(c.approval)+"%";
+ setMeter("approvalMeter",c.approval);setMeter("approvalMeter2",c.approval);
+ $("milPower").textContent=Math.round((c.army+c.air+c.navy)/3);
+ $("techLevel").textContent=c.tech;
+ $("diplomacyScore").textContent=c.diplomacy;
+ $("industryScore").textContent=c.industry;
+ $("taxRange").value=c.tax;$("taxValue").textContent=c.tax+"%";
+ $("spendRange").value=c.spend;$("spendValue").textContent=fmtMoney(c.spend);
+ $("income").textContent=fmtMoney(c.gdp/1000*c.tax/100*12);
+ $("expenses").textContent=fmtMoney(c.spend/4);
+ $("army").textContent=c.army;$("air").textContent=c.air;$("navy").textContent=c.navy;
+ setMeter("armyMeter",c.army);setMeter("airMeter",c.air);setMeter("navyMeter",c.navy);
+ $("techIndustry").textContent=c.industry;$("techHealth").textContent=c.health;
+ $("techEnergy").textContent=c.energy;$("techSpace").textContent=c.space;
+ setMeter("industryMeter",c.industry);setMeter("healthMeter",c.health);
+ setMeter("energyMeter",c.energy);setMeter("spaceMeter",c.space);
+ $("capitalDisplay").textContent=c.capital;
+ $("languageDisplay").textContent=c.language;
+ $("allianceCount").textContent=[...alliances].filter(k=>k.split("|").includes(c.name)).length;
+ $("warCount").textContent=[...wars].some(k=>k.split("|").includes(c.name))?"Aktif":"Yok";
+ $("dateLabel").textContent=months[month-1]+" "+year;
+ $("nameInput").value=c.name;$("flagInput").value=c.flag;
+ $("capitalInput").value=c.capital;$("languageInput").value=c.language;
+ $("summary").textContent=c.name+" ekonomisi "+fmtGDP(c.gdp)+", hazinesi "+fmtMoney(c.treasury)+". Halk desteği %"+Math.round(c.approval)+".";
+ updateDiplomacy();
+}
+function updateDiplomacy(){
+ const p=countries[Number($("partnerSelect").value)];
+ if(!p){$("relationValue").textContent="—";setMeter("relationMeter",0);return}
+ const r=getRelation(country().name,p.name);
+ $("relationValue").textContent=Math.round(r)+" / 100";
+ setMeter("relationMeter",r);
+}
+function switchTab(tab){
+ document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
+ document.querySelectorAll(".section").forEach(s=>s.classList.toggle("active",s.id==="tab-"+tab));
+}
+function spend(amount){
+ if(country().treasury<amount){notify("Hazinede yet
